@@ -12,6 +12,12 @@ export default function AdminPage() {
         <Link href="/admin/settings" className="text-sm text-blue-600 hover:underline">
           Settings
         </Link>
+        <Link href="/admin/teams" className="text-sm text-blue-600 hover:underline">
+          Teams
+        </Link>
+        <Link href="/admin/leaderboard" className="text-sm text-blue-600 hover:underline">
+          Leaderboard
+        </Link>
       </nav>
 
       <form action="/logout" method="POST" className="mt-4">

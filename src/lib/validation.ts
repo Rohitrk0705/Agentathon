@@ -100,3 +100,19 @@ export function validatePptFile(file: File): { ok: true } | { error: string } {
 
   return { ok: true };
 }
+
+// Union order matters here: z.coerce.number() on "" resolves to 0 (JS
+// `Number("") === 0`), not NaN, so the literal("") branch must come first
+// or an empty score would silently save as 0 instead of clearing to null.
+export const scoreSubmissionSchema = z.object({
+  submission_id: z.string().uuid(),
+  score: z.union([
+    z.literal("").transform(() => null),
+    z.coerce.number().min(0).max(10),
+  ]),
+  remarks: z.preprocess((val) => {
+    if (typeof val !== "string") return val;
+    const trimmed = val.trim();
+    return trimmed === "" ? null : trimmed;
+  }, z.string().max(2000).nullable()),
+});
