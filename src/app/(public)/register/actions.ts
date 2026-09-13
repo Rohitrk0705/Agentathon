@@ -7,41 +7,6 @@ import { registerSchema } from "@/lib/validation";
 
 export type RegisterActionResult = { ok: true } | { error: string };
 
-export type RegisterTrack = { id: string; title: string };
-
-// RLS on `app_settings`/`tracks` only allows reads for authenticated sessions,
-// but this data must be visible to signed-out visitors on /login and
-// /register. The service-role admin client is confined to this file (and
-// lib/supabase/admin.ts) per the project's non-negotiables, so these two
-// read-only helpers live here rather than adding a third file that imports it.
-export async function getRegistrationOpen(): Promise<boolean> {
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("app_settings")
-    .select("registration_open")
-    .eq("id", 1)
-    .single();
-
-  return data?.registration_open ?? false;
-}
-
-export async function getRegisterPageData(): Promise<{
-  registrationOpen: boolean;
-  tracks: RegisterTrack[];
-}> {
-  const admin = createAdminClient();
-
-  const [{ data: settings }, { data: tracks }] = await Promise.all([
-    admin.from("app_settings").select("registration_open").eq("id", 1).single(),
-    admin.from("tracks").select("id, title").order("title", { ascending: true }),
-  ]);
-
-  return {
-    registrationOpen: settings?.registration_open ?? false,
-    tracks: tracks ?? [],
-  };
-}
-
 export async function registerTeam(
   _prev: RegisterActionResult | null,
   formData: FormData,

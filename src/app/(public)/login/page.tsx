@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserAndProfile } from "@/lib/auth";
-import { getRegistrationOpen } from "@/app/(public)/register/actions";
+import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
@@ -11,7 +11,13 @@ export default async function LoginPage() {
     redirect(result.profile.role === "admin" ? "/admin" : "/dashboard");
   }
 
-  const registrationOpen = await getRegistrationOpen();
+  const supabase = await createClient();
+  const { data: settings } = await supabase
+    .from("app_settings")
+    .select("registration_open")
+    .eq("id", 1)
+    .single();
+  const registrationOpen = settings?.registration_open ?? false;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">

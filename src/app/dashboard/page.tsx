@@ -1,12 +1,14 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { ReviewSlots } from "./review-slots";
+import type { SubmissionRow } from "./review-slot";
 
 export default async function DashboardPage() {
   const { user } = await requireUser();
 
   const supabase = await createClient();
 
-  const [{ data: team }, { data: tracks }] = await Promise.all([
+  const [{ data: team }, { data: tracks }, { data: reviews }] = await Promise.all([
     supabase
       .from("teams")
       .select("id, team_name, track_id, member_count, contact_email, contact_phone")
@@ -16,16 +18,34 @@ export default async function DashboardPage() {
       .from("tracks")
       .select("id, title, description")
       .order("title", { ascending: true }),
+    supabase
+      .from("reviews")
+      .select("review_number, title, upload_deadline")
+      .order("review_number", { ascending: true }),
   ]);
 
-  const [{ data: members }, { data: teamTrack }] = team
+  const [{ data: members }, { data: teamTrack }, { data: submissions }] = team
     ? await Promise.all([
         supabase.from("team_members").select("name").eq("team_id", team.id),
         team.track_id
           ? supabase.from("tracks").select("title").eq("id", team.track_id).single()
           : Promise.resolve({ data: null }),
+        supabase
+          .from("submissions")
+          .select("review_number, ppt_filename, ppt_uploaded_at, github_url, demo_url")
+          .eq("team_id", team.id),
       ])
-    : [{ data: null }, { data: null }];
+    : [{ data: null }, { data: null }, { data: null }];
+
+  const submissionsMap: Record<number, SubmissionRow | undefined> = {};
+  for (const s of submissions ?? []) {
+    submissionsMap[s.review_number] = {
+      ppt_filename: s.ppt_filename,
+      ppt_uploaded_at: s.ppt_uploaded_at,
+      github_url: s.github_url,
+      demo_url: s.demo_url,
+    };
+  }
 
   return (
     <main className="mx-auto max-w-2xl p-8">
@@ -95,11 +115,21 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="mt-8 rounded-md border border-gray-200 p-4">
+      <section className="mt-8">
         <h2 className="text-sm font-medium text-gray-900">Reviews</h2>
-        <p className="mt-2 text-sm text-gray-500">
-          Review submission slots coming in the next update.
-        </p>
+        <div className="mt-2">
+          {team ? (
+            <ReviewSlots
+              teamId={team.id}
+              reviews={reviews ?? []}
+              submissions={submissionsMap}
+            />
+          ) : (
+            <p className="text-sm text-gray-500">
+              No team found for your account. Contact the organizers.
+            </p>
+          )}
+        </div>
       </section>
     </main>
   );

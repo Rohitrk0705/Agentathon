@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserAndProfile } from "@/lib/auth";
-import { getRegisterPageData } from "./actions";
+import { createClient } from "@/lib/supabase/server";
 import { RegisterForm } from "./register-form";
 
 export default async function RegisterPage() {
@@ -11,9 +11,14 @@ export default async function RegisterPage() {
     redirect(result.profile.role === "admin" ? "/admin" : "/dashboard");
   }
 
-  const { registrationOpen, tracks } = await getRegisterPageData();
+  const supabase = await createClient();
 
-  if (!registrationOpen) {
+  const [{ data: settings }, { data: tracks }] = await Promise.all([
+    supabase.from("app_settings").select("registration_open").eq("id", 1).single(),
+    supabase.from("tracks").select("id, title").order("title", { ascending: true }),
+  ]);
+
+  if (!settings?.registration_open) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-sm space-y-4 text-center">
@@ -40,7 +45,7 @@ export default async function RegisterPage() {
           </h1>
           <p className="mt-1 text-sm text-gray-500">Agentathon</p>
         </div>
-        <RegisterForm tracks={tracks} />
+        <RegisterForm tracks={tracks ?? []} />
       </div>
     </main>
   );

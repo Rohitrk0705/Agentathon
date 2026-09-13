@@ -55,3 +55,48 @@ export const registerSchema = z
       });
     }
   });
+
+const optionalUrl = z.preprocess(
+  (val) => (typeof val !== "string" || val.trim() === "" ? undefined : val),
+  z.string().trim().url().startsWith("http").optional(),
+);
+
+export const reviewSubmissionSchema = z.object({
+  review_number: z.coerce.number().int().min(1).max(3),
+  github_url: optionalUrl,
+  demo_url: optionalUrl,
+});
+
+export const pptUploadSchema = z.object({
+  review_number: z.coerce.number().int().min(1).max(3),
+});
+
+const PPT_MIME_TYPES = [
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-powerpoint",
+  "application/pdf",
+];
+
+const PPT_EXTENSIONS = [".pptx", ".ppt", ".pdf"];
+
+const MAX_PPT_SIZE_BYTES = 25 * 1024 * 1024;
+
+export function validatePptFile(file: File): { ok: true } | { error: string } {
+  if (!file || file.size <= 0) {
+    return { error: "Please select a file to upload." };
+  }
+
+  if (file.size > MAX_PPT_SIZE_BYTES) {
+    return { error: "File must be 25 MB or smaller." };
+  }
+
+  const name = file.name.toLowerCase();
+  const hasValidExtension = PPT_EXTENSIONS.some((ext) => name.endsWith(ext));
+  const hasValidMimeType = PPT_MIME_TYPES.includes(file.type);
+
+  if (!hasValidMimeType && !hasValidExtension) {
+    return { error: "File must be a .pptx, .ppt, or .pdf." };
+  }
+
+  return { ok: true };
+}
