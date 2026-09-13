@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserAndProfile } from "@/lib/auth";
+import { getRegistrationOpen } from "@/app/(public)/register/actions";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
@@ -8,6 +10,8 @@ export default async function LoginPage() {
   if (result) {
     redirect(result.profile.role === "admin" ? "/admin" : "/dashboard");
   }
+
+  const registrationOpen = await getRegistrationOpen();
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
@@ -19,6 +23,18 @@ export default async function LoginPage() {
           </p>
         </div>
         <LoginForm />
+        <p className="text-center text-sm text-gray-500">
+          {registrationOpen ? (
+            <>
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="text-blue-600 hover:underline">
+                Register your team
+              </Link>
+            </>
+          ) : (
+            "Registration is currently closed"
+          )}
+        </p>
       </div>
     </main>
   );

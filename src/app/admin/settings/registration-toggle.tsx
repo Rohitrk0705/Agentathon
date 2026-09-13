@@ -1,27 +1,28 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
+import { SuccessToast } from "@/components/success-toast";
 import { setRegistrationOpen, type SettingsActionResult } from "./actions";
 
 const initialState: SettingsActionResult | null = null;
-
-function SuccessNote() {
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!visible) return null;
-  return <p className="mb-2 text-sm text-green-700">Saved.</p>;
-}
 
 export function RegistrationToggle({ open }: { open: boolean }) {
   const [state, formAction, pending] = useActionState(
     setRegistrationOpen,
     initialState,
   );
+  const [lastHandledState, setLastHandledState] = useState(state);
+  const [dismissed, setDismissed] = useState(false);
+
+  if (state !== lastHandledState) {
+    setLastHandledState(state);
+    setDismissed(false);
+  }
+
+  const dismiss = useCallback(() => setDismissed(true), []);
+
+  const showToast =
+    !pending && !dismissed && state !== null && "ok" in state && state.ok;
 
   return (
     <section className="rounded-md border border-gray-200 p-4">
@@ -39,7 +40,11 @@ export function RegistrationToggle({ open }: { open: boolean }) {
         {state && "error" in state ? (
           <p className="mb-2 text-sm text-red-600">{state.error}</p>
         ) : null}
-        {!pending && state && "ok" in state && state.ok ? <SuccessNote /> : null}
+        {showToast ? (
+          <div className="mb-2">
+            <SuccessToast message="Saved." onDismiss={dismiss} />
+          </div>
+        ) : null}
 
         <button
           type="submit"

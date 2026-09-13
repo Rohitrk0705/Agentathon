@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import { reviewStatus } from "@/lib/deadlines";
+import { SuccessToast } from "@/components/success-toast";
 import { setReviewDeadline, type SettingsActionResult } from "./actions";
 
 const initialState: SettingsActionResult | null = null;
@@ -32,18 +33,6 @@ const STATUS_CLASS: Record<ReturnType<typeof reviewStatus>, string> = {
   locked: "bg-red-100 text-red-700",
 };
 
-function SuccessNote() {
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!visible) return null;
-  return <p className="text-sm text-green-700">Saved.</p>;
-}
-
 function ReviewDeadlineCard({ review }: { review: Review }) {
   const [state, formAction, pending] = useActionState(
     setReviewDeadline,
@@ -52,6 +41,15 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
   const [localValue, setLocalValue] = useState(
     review.upload_deadline ? isoToLocalInputValue(review.upload_deadline) : "",
   );
+  const [lastHandledState, setLastHandledState] = useState(state);
+  const [dismissed, setDismissed] = useState(false);
+
+  if (state !== lastHandledState) {
+    setLastHandledState(state);
+    setDismissed(false);
+  }
+
+  const dismiss = useCallback(() => setDismissed(true), []);
 
   const status = reviewStatus(review.upload_deadline);
 
@@ -94,7 +92,9 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
         {state && "error" in state ? (
           <p className="text-sm text-red-600">{state.error}</p>
         ) : null}
-        {!pending && state && "ok" in state && state.ok ? <SuccessNote /> : null}
+        {!pending && !dismissed && state && "ok" in state && state.ok ? (
+          <SuccessToast message="Saved." onDismiss={dismiss} />
+        ) : null}
 
         <div className="flex gap-2">
           <button

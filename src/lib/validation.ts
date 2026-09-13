@@ -28,3 +28,30 @@ export const reviewDeadlineSchema = z.object({
     .union([z.string().datetime(), z.literal("")])
     .transform((v) => (v === "" ? null : v)),
 });
+
+const memberNameSchema = z.string().trim().min(1).max(80);
+
+export const registerSchema = z
+  .object({
+    team_name: z.string().trim().min(2).max(80),
+    track_id: z.string().uuid(),
+    member_count: z.coerce.number().int().min(1).max(10),
+    member_names: z.array(memberNameSchema),
+    contact_email: z.string().trim().email(),
+    contact_phone: z
+      .string()
+      .trim()
+      .min(7)
+      .max(20)
+      .regex(/^[0-9+\-\s]+$/, "Only digits, spaces, + and - are allowed."),
+    password: z.string().min(8),
+  })
+  .superRefine((data, ctx) => {
+    if (data.member_names.length !== data.member_count) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Number of member names must match the member count.",
+        path: ["member_names"],
+      });
+    }
+  });
