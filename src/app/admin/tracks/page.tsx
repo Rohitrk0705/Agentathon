@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NewTrackForm } from "./new-track-form";
@@ -14,27 +13,47 @@ export default async function AdminTracksPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      <Link href="/admin" className="text-sm text-gray-500 hover:underline">
-        ← Back to admin
-      </Link>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-primary">
+          Tracks
+        </h1>
+        <p className="mt-1 text-sm text-secondary">
+          Problem statements teams can pick
+        </p>
+      </div>
 
-      <h1 className="mt-2 text-xl font-semibold">Tracks</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Manage the tracks teams can register against.
-      </p>
-
-      <div className="mt-6">
+      <div className="mb-8">
         <NewTrackForm />
       </div>
 
-      <div className="mt-8 space-y-4">
+      <div className="space-y-4">
         {tracks && tracks.length > 0 ? (
           tracks.map((track) => <TrackRow key={track.id} track={track} />)
         ) : (
-          <p className="text-sm text-gray-500">No tracks yet.</p>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <svg
+              className="h-10 w-10 text-muted mb-3"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+              <path d="m6.08 9.5-3.5 1.6a1 1 0 0 0 0 1.81l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9a1 1 0 0 0 0-1.83l-3.5-1.59" />
+              <path d="m6.08 14.5-3.5 1.6a1 1 0 0 0 0 1.81l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9a1 1 0 0 0 0-1.83l-3.5-1.59" />
+            </svg>
+            <h3 className="text-base font-semibold text-primary">No tracks yet</h3>
+            <p className="mt-1 text-sm text-secondary">
+              Add your first track above
+            </p>
+          </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

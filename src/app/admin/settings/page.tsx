@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { RegistrationToggle } from "./registration-toggle";
@@ -22,23 +21,26 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      <Link href="/admin" className="text-sm text-gray-500 hover:underline">
-        ← Back to admin
-      </Link>
+    <div>
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-primary">
+          Settings
+        </h1>
+        <p className="mt-1 text-sm text-secondary">
+          Control registration and each review&apos;s upload deadline
+        </p>
+      </div>
 
-      <h1 className="mt-2 text-xl font-semibold">Settings</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Control registration and each review&apos;s upload deadline.
-      </p>
-
-      <div className="mt-6">
+      <div className="space-y-8">
         <RegistrationToggle open={settings?.registration_open ?? false} />
-      </div>
 
-      <div className="mt-8">
-        <ReviewDeadlines reviews={reviews ?? []} />
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-primary mb-4">
+            Review Deadlines
+          </h2>
+          <ReviewDeadlines reviews={reviews ?? []} />
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

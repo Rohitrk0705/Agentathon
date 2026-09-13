@@ -59,15 +59,18 @@ export function ScoreForm({
   return (
     <form
       action={formAction}
-      className="mt-2 space-y-2"
+      className="space-y-3"
       onSubmit={(e) => {
         if (clientError) e.preventDefault();
       }}
     >
       <input type="hidden" name="submission_id" value={submissionId} />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="text-xs text-gray-600" htmlFor={`score_${submissionId}`}>
+      <div className="flex flex-wrap items-center gap-3">
+        <label
+          className="text-xs text-muted"
+          htmlFor={`score_${submissionId}`}
+        >
           Score
         </label>
         <input
@@ -79,13 +82,13 @@ export function ScoreForm({
           max="10"
           value={scoreValue}
           onChange={(e) => handleScoreChange(e.target.value)}
-          className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-gray-500 focus:outline-none"
+          className="w-20 rounded-md border border-border-subtle bg-surface px-2 py-1.5 text-sm text-primary font-[family-name:var(--font-geist-mono)] tabular-nums focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150"
         />
 
         <button
           type="submit"
           disabled={pending || !!clientError}
-          className="rounded-md border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
+          className="rounded-md border border-border-subtle bg-transparent px-3 py-1.5 text-sm text-primary hover:bg-surface-hover hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
         >
           {pending ? "Saving…" : "Save score"}
         </button>
@@ -97,12 +100,14 @@ export function ScoreForm({
         maxLength={2000}
         defaultValue={initialRemarks ?? ""}
         placeholder="Remarks (optional)"
-        className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-gray-500 focus:outline-none"
+        className="w-full min-h-[60px] rounded-md border border-border-subtle bg-surface px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150"
       />
 
-      {clientError ? <p className="text-sm text-red-600">{clientError}</p> : null}
+      {clientError ? (
+        <p role="alert" className="text-sm text-danger">{clientError}</p>
+      ) : null}
       {state && "error" in state ? (
-        <p className="text-sm text-red-600">{state.error}</p>
+        <p role="alert" className="text-sm text-danger">{state.error}</p>
       ) : null}
       {!pending && !toast.dismissed && state && "ok" in state && state.ok ? (
         <SuccessToast message="Saved" onDismiss={toast.dismiss} />

@@ -27,10 +27,10 @@ const STATUS_LABEL: Record<ReturnType<typeof reviewStatus>, string> = {
   locked: "Locked",
 };
 
-const STATUS_CLASS: Record<ReturnType<typeof reviewStatus>, string> = {
-  not_open: "bg-gray-100 text-gray-700",
-  open: "bg-green-100 text-green-700",
-  locked: "bg-red-100 text-red-700",
+const STATUS_VARIANT: Record<ReturnType<typeof reviewStatus>, string> = {
+  not_open: "bg-surface-hover text-secondary",
+  open: "bg-success/10 text-success",
+  locked: "bg-danger/10 text-danger",
 };
 
 function ReviewDeadlineCard({ review }: { review: Review }) {
@@ -54,11 +54,11 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
   const status = reviewStatus(review.upload_deadline);
 
   return (
-    <div className="rounded-md border border-gray-200 p-4">
+    <div className="rounded-lg border border-border-subtle bg-surface p-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-900">{review.title}</h3>
+        <h3 className="text-base font-semibold text-primary">{review.title}</h3>
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[status]}`}
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_VARIANT[status]}`}
         >
           {STATUS_LABEL[status]}
         </span>
@@ -77,7 +77,7 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
           }
           formAction(formData);
         }}
-        className="mt-3 space-y-2"
+        className="mt-4 space-y-3"
       >
         <input type="hidden" name="review_number" value={review.review_number} />
 
@@ -86,11 +86,11 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
           name="upload_deadline"
           value={localValue}
           onChange={(e) => setLocalValue(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
+          className="w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-sm text-primary focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150"
         />
 
         {state && "error" in state ? (
-          <p className="text-sm text-red-600">{state.error}</p>
+          <p role="alert" className="text-sm text-danger">{state.error}</p>
         ) : null}
         {!pending && !dismissed && state && "ok" in state && state.ok ? (
           <SuccessToast message="Saved." onDismiss={dismiss} />
@@ -102,7 +102,7 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
             name="intent"
             value="save"
             disabled={pending}
-            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-accent text-accent-text px-4 py-2 text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
           >
             {pending ? "Saving…" : "Save deadline"}
           </button>
@@ -112,9 +112,9 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
             value="clear"
             disabled={pending}
             onClick={() => setLocalValue("")}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+            className="rounded-md bg-transparent border border-border-subtle px-4 py-2 text-sm text-primary hover:bg-surface-hover hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
           >
-            Clear deadline
+            Clear
           </button>
         </div>
       </form>

@@ -16,5 +16,9 @@ export function SuccessToast({
     return () => clearTimeout(timer);
   }, [onDismiss, durationMs]);
 
-  return <p className="text-sm text-green-700">{message}</p>;
+  return (
+    <p className="text-sm text-success">
+      {message}
+    </p>
+  );
 }

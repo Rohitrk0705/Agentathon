@@ -20,28 +20,37 @@ export default async function LoginPage() {
   const registrationOpen = settings?.registration_open ?? false;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Log in</h1>
-          <p className="mt-1 text-sm text-gray-500">
+    <div className="w-full max-w-sm">
+      <div className="rounded-lg border border-border-subtle bg-surface p-6 md:p-8">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-primary">
+            Sign in
+          </h1>
+          <p className="mt-1 text-sm text-secondary">
             Agentathon submission portal
           </p>
         </div>
+
         <LoginForm />
-        <p className="text-center text-sm text-gray-500">
+
+        <div className="mt-6 pt-6 border-t border-border-subtle text-center">
           {registrationOpen ? (
-            <>
-              Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-blue-600 hover:underline">
+            <div className="space-y-2">
+              <p className="text-xs text-muted">New to Agentathon?</p>
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center w-full rounded-md border border-border-subtle bg-transparent px-4 py-2 text-sm text-primary hover:bg-surface-hover hover:border-border-strong transition-colors duration-150"
+              >
                 Register your team
               </Link>
-            </>
+            </div>
           ) : (
-            "Registration is currently closed"
+            <p className="text-sm text-muted">
+              Registration is currently closed
+            </p>
           )}
-        </p>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

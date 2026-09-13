@@ -18,16 +18,19 @@ export function NewTrackForm() {
     }
   }, [state]);
 
+  const inputClasses =
+    "w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150";
+
   return (
     <form
       ref={formRef}
       action={formAction}
-      className="space-y-3 rounded-md border border-gray-200 p-4"
+      className="rounded-lg border border-border-subtle bg-surface p-6 space-y-4"
     >
-      <h2 className="text-sm font-medium text-gray-900">Add a track</h2>
+      <h2 className="text-base font-semibold text-primary">Add a track</h2>
 
       <div>
-        <label htmlFor="title" className="block text-sm text-gray-700">
+        <label htmlFor="title" className="block text-sm font-medium text-secondary mb-1.5">
           Title
         </label>
         <input
@@ -36,12 +39,12 @@ export function NewTrackForm() {
           type="text"
           required
           maxLength={200}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
+          className={inputClasses}
         />
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-secondary mb-1.5">
           Description (optional)
         </label>
         <textarea
@@ -49,18 +52,18 @@ export function NewTrackForm() {
           name="description"
           rows={3}
           maxLength={2000}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
+          className={`${inputClasses} min-h-[80px]`}
         />
       </div>
 
       {state && "error" in state ? (
-        <p className="text-sm text-red-600">{state.error}</p>
+        <p role="alert" className="text-sm text-danger">{state.error}</p>
       ) : null}
 
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="rounded-md bg-accent text-accent-text px-4 py-2 text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
       >
         {pending ? "Adding…" : "Add track"}
       </button>

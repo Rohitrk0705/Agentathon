@@ -25,23 +25,26 @@ export function RegistrationToggle({ open }: { open: boolean }) {
     !pending && !dismissed && state !== null && "ok" in state && state.ok;
 
   return (
-    <section className="rounded-md border border-gray-200 p-4">
-      <h2 className="text-sm font-medium text-gray-900">Registration</h2>
-      <p className="mt-1 text-sm text-gray-600">
-        Registration is{" "}
-        <span className={open ? "font-semibold text-green-700" : "font-semibold text-red-700"}>
+    <section className="rounded-lg border border-border-subtle bg-surface p-6">
+      <h2 className="text-base font-semibold text-primary">Registration</h2>
+      <div className="mt-3">
+        <span
+          className={`text-2xl font-bold tracking-tight ${
+            open ? "text-accent" : "text-danger"
+          }`}
+        >
           {open ? "OPEN" : "CLOSED"}
         </span>
-      </p>
+      </div>
 
-      <form action={formAction} className="mt-3">
+      <form action={formAction} className="mt-4">
         <input type="hidden" name="open" value={open ? "false" : "true"} />
 
         {state && "error" in state ? (
-          <p className="mb-2 text-sm text-red-600">{state.error}</p>
+          <p role="alert" className="mb-3 text-sm text-danger">{state.error}</p>
         ) : null}
         {showToast ? (
-          <div className="mb-2">
+          <div className="mb-3">
             <SuccessToast message="Saved." onDismiss={dismiss} />
           </div>
         ) : null}
@@ -49,7 +52,11 @@ export function RegistrationToggle({ open }: { open: boolean }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
+            open
+              ? "bg-transparent text-danger border border-danger/40 hover:bg-danger hover:text-white hover:border-danger"
+              : "bg-accent text-accent-text hover:bg-accent-hover"
+          }`}
         >
           {pending
             ? "Saving…"
