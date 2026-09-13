@@ -2,8 +2,8 @@
 
 import { useActionState, useCallback, useState, type ChangeEvent } from "react";
 import { reviewStatus } from "@/lib/deadlines";
-import { formatLocalDateTime } from "@/lib/format";
 import { SuccessToast } from "@/components/success-toast";
+import { ClientOnlyDateTime } from "@/components/client-only-datetime";
 import { uploadPpt, saveLinks, type ReviewActionResult } from "./actions";
 import { Countdown } from "./countdown";
 
@@ -128,9 +128,13 @@ export function ReviewSlot({
       {/* Deadline + countdown */}
       <div className="mt-1 flex items-center gap-2">
         <p className="font-[family-name:var(--font-geist-mono)] text-xs text-muted">
-          {review.upload_deadline
-            ? `Deadline: ${formatLocalDateTime(review.upload_deadline)}`
-            : "Deadline not set"}
+          {review.upload_deadline ? (
+            <>
+              Deadline: <ClientOnlyDateTime iso={review.upload_deadline} />
+            </>
+          ) : (
+            "Deadline not set"
+          )}
         </p>
         {status === "open" && review.upload_deadline ? (
           <>
@@ -162,7 +166,7 @@ export function ReviewSlot({
               </span>
               {submission.ppt_uploaded_at ? (
                 <span className="text-xs text-muted">
-                  uploaded {formatLocalDateTime(submission.ppt_uploaded_at)}
+                  uploaded <ClientOnlyDateTime iso={submission.ppt_uploaded_at} />
                 </span>
               ) : null}
             </div>

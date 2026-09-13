@@ -5,8 +5,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
-  serverActions: {
-    bodySizeLimit: "25mb",
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "25mb",
+    },
   },
 };
 
