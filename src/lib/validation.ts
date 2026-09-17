@@ -79,7 +79,7 @@ const PPT_MIME_TYPES = [
 
 const PPT_EXTENSIONS = [".pptx", ".ppt", ".pdf"];
 
-const MAX_PPT_SIZE_BYTES = 25 * 1024 * 1024;
+const MAX_PPT_SIZE_BYTES = 5 * 1024 * 1024;
 
 export function validatePptFile(file: File): { ok: true } | { error: string } {
   if (!file || file.size <= 0) {
@@ -87,7 +87,7 @@ export function validatePptFile(file: File): { ok: true } | { error: string } {
   }
 
   if (file.size > MAX_PPT_SIZE_BYTES) {
-    return { error: "File must be 25 MB or smaller." };
+    return { error: "File must be 5 MB or smaller." };
   }
 
   const name = file.name.toLowerCase();

@@ -96,7 +96,7 @@ export default async function LandingPage() {
                 3 Checkpoint Reviews
               </h3>
               <p className="mt-2 text-sm text-secondary leading-relaxed">
-                Upload pitch decks (.pptx / .pdf up to 25MB) and attach GitHub repos & live
+                Upload pitch decks (.pptx / .pdf up to 5MB) and attach GitHub repos & live
                 demo links before strict deadlines.
               </p>
             </div>

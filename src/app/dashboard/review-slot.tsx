@@ -35,7 +35,7 @@ export type SubmissionRow = {
   demo_url: string | null;
 };
 
-const MAX_PPT_SIZE_BYTES = 25 * 1024 * 1024;
+const MAX_PPT_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [".pptx", ".ppt", ".pdf"];
 
 function useDismissableSuccess(state: ReviewActionResult | null) {
@@ -91,7 +91,7 @@ export function ReviewSlot({
       return;
     }
     if (file.size > MAX_PPT_SIZE_BYTES) {
-      setFileError("File must be 25 MB or smaller.");
+      setFileError("File must be 5 MB or smaller.");
       return;
     }
     const name = file.name.toLowerCase();
@@ -237,7 +237,7 @@ export function ReviewSlot({
                   {selectedFile ? selectedFile.name : "Select presentation file or drag & drop"}
                 </span>
                 <span className="mt-1 text-[11px] text-muted">
-                  Supports .pptx, .ppt, or .pdf (up to 25 MB)
+                  Supports .pptx, .ppt, or .pdf (up to 5 MB)
                 </span>
               </label>
 
