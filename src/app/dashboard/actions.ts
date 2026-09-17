@@ -79,6 +79,7 @@ export async function uploadPpt(
     .upload(path, file, { upsert: true, contentType: file.type || undefined });
 
   if (uploadError) {
+    console.error("Upload failed:", uploadError);
     return { error: "Could not upload the file. Please try again." };
   }
 
@@ -94,6 +95,7 @@ export async function uploadPpt(
   );
 
   if (upsertError) {
+    console.error("Submission save failed:", upsertError);
     return { error: "Could not save the submission. Please try again." };
   }
 
