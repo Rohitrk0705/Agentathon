@@ -12,7 +12,7 @@ export function ReviewSlots({
   submissions: Record<number, SubmissionRow | undefined>;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {reviews.map((review) => (
         <ReviewSlot
           key={review.review_number}

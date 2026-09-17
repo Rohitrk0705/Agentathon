@@ -1,72 +1,100 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { createTrack, type TrackActionResult } from "./actions";
+import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input, Label, FieldError } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus } from "lucide-react";
 
 const initialState: TrackActionResult | null = null;
 
 export function NewTrackForm() {
+  const [isOpen, setIsOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     createTrack,
     initialState,
   );
+  const [lastHandledState, setLastHandledState] = useState(state);
   const formRef = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
+  if (state !== lastHandledState) {
+    setLastHandledState(state);
     if (state && "ok" in state && state.ok) {
-      formRef.current?.reset();
+      setIsOpen(false);
     }
-  }, [state]);
-
-  const inputClasses =
-    "w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150";
+  }
 
   return (
-    <form
-      ref={formRef}
-      action={formAction}
-      className="rounded-lg border border-border-subtle bg-surface p-6 space-y-4"
-    >
-      <h2 className="text-base font-semibold text-primary">Add a track</h2>
-
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium text-secondary mb-1.5">
-          Title
-        </label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          required
-          maxLength={200}
-          className={inputClasses}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-secondary mb-1.5">
-          Description (optional)
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          maxLength={2000}
-          className={`${inputClasses} min-h-[80px]`}
-        />
-      </div>
-
-      {state && "error" in state ? (
-        <p role="alert" className="text-sm text-danger">{state.error}</p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-accent text-accent-text px-4 py-2 text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+    <>
+      <Button
+        type="button"
+        variant="primary"
+        size="md"
+        onClick={() => setIsOpen(true)}
+        icon={<Plus className="h-4 w-4" />}
       >
-        {pending ? "Adding…" : "Add track"}
-      </button>
-    </form>
+        Create New Track
+      </Button>
+
+      <Dialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Create Problem Track"
+        description="Add a new challenge track or domain for participating teams."
+      >
+        <form ref={formRef} action={formAction} className="space-y-4">
+          <div>
+            <Label htmlFor="title" requiredBadge>
+              Track Title
+            </Label>
+            <Input
+              id="title"
+              name="title"
+              type="text"
+              required
+              maxLength={200}
+              placeholder="e.g. Autonomous Financial Analysts"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Textarea
+              id="description"
+              name="description"
+              rows={3}
+              maxLength={2000}
+              placeholder="Guidelines, criteria, and problem scope for this track..."
+            />
+          </div>
+
+          {state && "error" in state ? (
+            <FieldError>{state.error}</FieldError>
+          ) : null}
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-border-subtle">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+              disabled={pending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              loading={pending}
+            >
+              {pending ? "Creating…" : "Save Track"}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+    </>
   );
 }

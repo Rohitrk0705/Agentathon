@@ -3,6 +3,9 @@
 import { useActionState, useCallback, useState } from "react";
 import { SuccessToast } from "@/components/success-toast";
 import { scoreSubmission, type ScoreActionResult } from "./actions";
+import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/input";
+import { Award, Check } from "lucide-react";
 
 const initialState: ScoreActionResult | null = null;
 
@@ -59,7 +62,7 @@ export function ScoreForm({
   return (
     <form
       action={formAction}
-      className="space-y-3"
+      className="space-y-2.5"
       onSubmit={(e) => {
         if (clientError) e.preventDefault();
       }}
@@ -67,31 +70,40 @@ export function ScoreForm({
       <input type="hidden" name="submission_id" value={submissionId} />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label
-          className="text-xs text-muted"
-          htmlFor={`score_${submissionId}`}
-        >
-          Score
-        </label>
-        <input
-          id={`score_${submissionId}`}
-          name="score"
-          type="number"
-          step="0.1"
-          min="0"
-          max="10"
-          value={scoreValue}
-          onChange={(e) => handleScoreChange(e.target.value)}
-          className="w-20 rounded-md border border-border-subtle bg-surface px-2 py-1.5 text-sm text-primary font-[family-name:var(--font-geist-mono)] tabular-nums focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150"
-        />
+        <div className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-2.5 py-1">
+          <Award className="h-3.5 w-3.5 text-accent shrink-0" />
+          <label
+            className="text-xs font-semibold text-secondary uppercase tracking-wider"
+            htmlFor={`score_${submissionId}`}
+          >
+            Score:
+          </label>
+          <input
+            id={`score_${submissionId}`}
+            name="score"
+            type="number"
+            step="0.1"
+            min="0"
+            max="10"
+            placeholder="—"
+            value={scoreValue}
+            onChange={(e) => handleScoreChange(e.target.value)}
+            className="w-14 bg-transparent text-sm font-mono font-semibold text-primary tabular-nums text-center focus:outline-none"
+          />
+          <span className="text-xs text-muted font-mono">/ 10</span>
+        </div>
 
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          size="sm"
+          loading={pending}
           disabled={pending || !!clientError}
-          className="rounded-md border border-border-subtle bg-transparent px-3 py-1.5 text-sm text-primary hover:bg-surface-hover hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+          icon={<Check className="h-3.5 w-3.5" />}
+          className="text-xs h-7 px-3"
         >
-          {pending ? "Saving…" : "Save score"}
-        </button>
+          {pending ? "Saving…" : "Save Score"}
+        </Button>
       </div>
 
       <textarea
@@ -99,18 +111,16 @@ export function ScoreForm({
         rows={2}
         maxLength={2000}
         defaultValue={initialRemarks ?? ""}
-        placeholder="Remarks (optional)"
-        className="w-full min-h-[60px] rounded-md border border-border-subtle bg-surface px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150"
+        placeholder="Judge remarks & constructive feedback (optional)..."
+        className="w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-xs text-primary placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150 resize-y min-h-[50px] leading-relaxed"
       />
 
-      {clientError ? (
-        <p role="alert" className="text-sm text-danger">{clientError}</p>
-      ) : null}
+      {clientError ? <FieldError>{clientError}</FieldError> : null}
       {state && "error" in state ? (
-        <p role="alert" className="text-sm text-danger">{state.error}</p>
+        <FieldError>{state.error}</FieldError>
       ) : null}
       {!pending && !toast.dismissed && state && "ok" in state && state.ok ? (
-        <SuccessToast message="Saved" onDismiss={toast.dismiss} />
+        <SuccessToast message="Evaluation score & remarks recorded." onDismiss={toast.dismiss} />
       ) : null}
     </form>
   );

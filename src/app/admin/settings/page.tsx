@@ -21,25 +21,40 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-primary">
-          Settings
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
+            Platform Settings
+          </span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">
+          Event Controls & Deadlines
         </h1>
-        <p className="mt-1 text-sm text-secondary">
-          Control registration and each review&apos;s upload deadline
+        <p className="mt-1 text-xs sm:text-sm text-secondary">
+          Configure team registration availability and manage stage upload lockouts
         </p>
       </div>
 
       <div className="space-y-8">
-        <RegistrationToggle open={settings?.registration_open ?? false} />
+        {/* Registration Gating */}
+        <section>
+          <RegistrationToggle open={settings?.registration_open ?? false} />
+        </section>
 
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-primary mb-4">
-            Review Deadlines
-          </h2>
+        {/* 3 Review Deadlines */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-primary">
+              Stage Review Deadlines
+            </h2>
+            <p className="text-xs text-secondary mt-0.5">
+              Set cutoffs in local time. When deadline passes, candidate submissions automatically lock.
+            </p>
+          </div>
           <ReviewDeadlines reviews={reviews ?? []} />
-        </div>
+        </section>
       </div>
     </div>
   );

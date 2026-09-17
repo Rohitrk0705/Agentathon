@@ -1,8 +1,10 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ReviewSlots } from "./review-slots";
 import type { SubmissionRow } from "./review-slot";
+import { Users, Mail, Phone, Compass, CheckCircle2 } from "lucide-react";
 
 export default async function DashboardPage() {
   const { user } = await requireUser();
@@ -29,7 +31,7 @@ export default async function DashboardPage() {
     ? await Promise.all([
         supabase.from("team_members").select("name").eq("team_id", team.id),
         team.track_id
-          ? supabase.from("tracks").select("title").eq("id", team.track_id).single()
+          ? supabase.from("tracks").select("title, description").eq("id", team.track_id).single()
           : Promise.resolve({ data: null }),
         supabase
           .from("submissions")
@@ -49,30 +51,93 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-primary">
-            Welcome, {team?.team_name ?? "Participant"}
-          </h1>
-          {teamTrack?.title ? (
-            <Badge variant="accent">{teamTrack.title}</Badge>
+    <div className="space-y-8">
+      {/* Top Team Header Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-border-subtle bg-surface/80 p-6 sm:p-8 backdrop-blur-md shadow-lg">
+        {/* Ambient glow accent */}
+        <div
+          className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full opacity-15 blur-3xl"
+          style={{ background: "var(--accent)" }}
+          aria-hidden="true"
+        />
+
+        <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
+                Team Workspace
+              </span>
+              {teamTrack?.title ? (
+                <Badge variant="accent" dot>
+                  {teamTrack.title}
+                </Badge>
+              ) : null}
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-primary">
+              {team?.team_name ?? "Participant Team"}
+            </h1>
+
+            {/* Chips bar */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 pt-1 text-xs text-secondary">
+              {team?.contact_email ? (
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-surface-elevated px-2.5 py-1 border border-border-subtle">
+                  <Mail className="h-3.5 w-3.5 text-muted" />
+                  <span>{team.contact_email}</span>
+                </div>
+              ) : null}
+
+              {team?.contact_phone ? (
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-surface-elevated px-2.5 py-1 border border-border-subtle">
+                  <Phone className="h-3.5 w-3.5 text-muted" />
+                  <span>{team.contact_phone}</span>
+                </div>
+              ) : null}
+
+              {team ? (
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-surface-elevated px-2.5 py-1 border border-border-subtle">
+                  <Users className="h-3.5 w-3.5 text-muted" />
+                  <span>{team.member_count} Member{team.member_count === 1 ? "" : "s"}</span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Team Members Avatar/List pills */}
+          {members && members.length > 0 ? (
+            <div className="flex flex-col md:items-end gap-2 pt-2 md:pt-0">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+                Roster
+              </span>
+              <div className="flex flex-wrap md:justify-end gap-1.5 max-w-sm">
+                {members.map((m, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 rounded-md bg-surface px-2 py-0.5 text-xs text-primary border border-border-subtle/80"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    {m.name}
+                  </span>
+                ))}
+              </div>
+            </div>
           ) : null}
         </div>
       </div>
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column — Reviews */}
+      {/* Main Content Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left 2 Columns: Milestone Reviews */}
         <div className="lg:col-span-2 space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight text-primary">
-              Reviews
-            </h2>
-            <p className="text-caption mt-1">
-              Submit your work for each review stage
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-primary">
+                Milestone Reviews
+              </h2>
+              <p className="text-xs sm:text-sm text-secondary mt-0.5">
+                Submit presentation decks (.pptx / .pdf) and deployment links for evaluation
+              </p>
+            </div>
           </div>
 
           {team ? (
@@ -82,85 +147,81 @@ export default async function DashboardPage() {
               submissions={submissionsMap}
             />
           ) : (
-            <div className="rounded-lg border border-border-subtle bg-surface p-6 text-center">
-              <p className="text-sm text-secondary">
-                No team found for your account. Contact the organizers.
-              </p>
-            </div>
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-sm text-secondary">
+                  No registered team found for your account. Please contact an organizer.
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
 
-        {/* Right column — Sidebar */}
+        {/* Right Column: Track Info & Competition Guidelines */}
         <div className="space-y-6">
-          {/* Team info card */}
-          <div className="rounded-lg border border-border-subtle bg-surface p-6">
-            <h2 className="text-base font-semibold text-primary mb-4">
-              Your Team
-            </h2>
-            {team ? (
-              <dl className="space-y-3 text-sm">
-                <div>
-                  <dt className="text-xs text-muted uppercase tracking-wider">Team</dt>
-                  <dd className="mt-0.5 text-primary font-medium">{team.team_name}</dd>
+          {/* Active Assigned Track Card */}
+          {teamTrack ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Your Assigned Track</span>
                 </div>
-                <div>
-                  <dt className="text-xs text-muted uppercase tracking-wider">Track</dt>
-                  <dd className="mt-0.5 text-primary">{teamTrack?.title ?? "—"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted uppercase tracking-wider">
-                    Members ({team.member_count})
-                  </dt>
-                  <dd className="mt-0.5 text-secondary">
-                    {members && members.length > 0 ? (
-                      <ul className="space-y-0.5">
-                        {members.map((m, i) => (
-                          <li key={i}>{m.name}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      "—"
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted uppercase tracking-wider">Email</dt>
-                  <dd className="mt-0.5 text-secondary">{team.contact_email}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted uppercase tracking-wider">Phone</dt>
-                  <dd className="mt-0.5 text-secondary">{team.contact_phone}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="text-sm text-secondary">
-                No team found for your account.
-              </p>
-            )}
-          </div>
+                <CardTitle className="text-lg">{teamTrack.title}</CardTitle>
+                {teamTrack.description ? (
+                  <CardDescription className="text-xs mt-1">
+                    {teamTrack.description}
+                  </CardDescription>
+                ) : null}
+              </CardHeader>
+            </Card>
+          ) : null}
 
-          {/* All tracks card */}
-          <div className="rounded-lg border border-border-subtle bg-surface p-6">
-            <h2 className="text-base font-semibold text-primary mb-4">
-              All Tracks
-            </h2>
-            <div className="space-y-3">
+          {/* All Tracks Grid Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+                <Compass className="h-3.5 w-3.5" />
+                <span>All Event Tracks</span>
+              </div>
+              <CardTitle className="text-base">Tracks Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-0">
               {tracks && tracks.length > 0 ? (
-                tracks.map((track) => (
-                  <div key={track.id}>
-                    <h3 className="text-sm font-medium text-primary">
-                      {track.title}
-                    </h3>
-                    {track.description ? (
-                      <p className="mt-0.5 text-xs text-muted">{track.description}</p>
-                    ) : null}
-                  </div>
-                ))
+                tracks.map((track) => {
+                  const isCurrent = track.id === team?.track_id;
+                  return (
+                    <div
+                      key={track.id}
+                      className={`rounded-xl border p-3.5 transition-colors ${
+                        isCurrent
+                          ? "border-accent/40 bg-accent-muted/40"
+                          : "border-border-subtle bg-surface-elevated/40 hover:border-border-strong"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-semibold text-primary">
+                          {track.title}
+                        </h4>
+                        {isCurrent ? (
+                          <Badge variant="accent" className="text-[10px] px-1.5 py-0">
+                            Your Track
+                          </Badge>
+                        ) : null}
+                      </div>
+                      {track.description ? (
+                        <p className="mt-1 text-[11px] text-muted line-clamp-2 leading-relaxed">
+                          {track.description}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })
               ) : (
-                <p className="text-xs text-muted">No tracks yet.</p>
+                <p className="text-xs text-muted">No tracks configured yet.</p>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

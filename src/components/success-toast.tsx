@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Toast } from "./ui/toast";
 
 export function SuccessToast({
   message,
@@ -11,14 +11,12 @@ export function SuccessToast({
   onDismiss: () => void;
   durationMs?: number;
 }) {
-  useEffect(() => {
-    const timer = setTimeout(onDismiss, durationMs);
-    return () => clearTimeout(timer);
-  }, [onDismiss, durationMs]);
-
   return (
-    <p className="text-sm text-success">
-      {message}
-    </p>
+    <Toast
+      message={message}
+      variant="success"
+      onDismiss={onDismiss}
+      durationMs={durationMs}
+    />
   );
 }

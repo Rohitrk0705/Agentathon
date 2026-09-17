@@ -5,7 +5,20 @@ import { reviewStatus } from "@/lib/deadlines";
 import { SuccessToast } from "@/components/success-toast";
 import { ClientOnlyDateTime } from "@/components/client-only-datetime";
 import { uploadPpt, saveLinks, type ReviewActionResult } from "./actions";
-import { Countdown } from "./countdown";
+import { Countdown } from "@/components/ui/countdown";
+import { StatusPill } from "@/components/ui/status-pill";
+import { Button } from "@/components/ui/button";
+import { Input, Label, FieldError } from "@/components/ui/input";
+import {
+  FileText,
+  UploadCloud,
+  Globe,
+  Lock,
+  ExternalLink,
+  Calendar,
+  CheckCircle2,
+} from "lucide-react";
+import { GithubIcon } from "@/components/ui/icons";
 
 const initialState: ReviewActionResult | null = null;
 
@@ -21,18 +34,6 @@ export type SubmissionRow = {
   github_url: string | null;
   demo_url: string | null;
 };
-
-const STATUS_LABEL = {
-  not_open: "Not open",
-  open: "Open",
-  locked: "Locked",
-} as const;
-
-const STATUS_VARIANT = {
-  not_open: "default",
-  open: "success",
-  locked: "danger",
-} as const;
 
 const MAX_PPT_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [".pptx", ".ppt", ".pdf"];
@@ -58,9 +59,11 @@ export function ReviewSlot({
   teamId: string;
   review: ReviewRow;
   submission: SubmissionRow | undefined;
-}) {
+  }) {
   const status = reviewStatus(review.upload_deadline);
-  const disabled = status !== "open";
+  const isLocked = status === "locked";
+  const isOpen = status === "open";
+  const isNotOpen = status === "not_open";
 
   const [uploadState, uploadAction, uploadPending] = useActionState(
     uploadPpt,
@@ -99,85 +102,118 @@ export function ReviewSlot({
     setFileError(null);
   }
 
-  const badgeVariant = STATUS_VARIANT[status];
-
-  const inputClasses =
-    "w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-sm text-primary placeholder:text-muted focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-surface-hover transition-colors duration-150";
+  // Determine primary badge status
+  let displayStatus: "open" | "locked" | "not_open" | "submitted" = status;
+  if (submission?.ppt_filename && !isLocked) {
+    displayStatus = "submitted";
+  }
 
   return (
     <div
       data-team-id={teamId}
-      className="rounded-lg border border-border-subtle bg-surface p-6"
+      className={`rounded-2xl border bg-surface transition-all duration-200 shadow-md ${
+        isLocked
+          ? "border-border-subtle/80 bg-surface/50 opacity-95"
+          : isOpen
+            ? "border-border hover:border-border-strong"
+            : "border-border-subtle bg-surface/40"
+      }`}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-primary">{review.title}</h3>
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            badgeVariant === "success"
-              ? "bg-success/10 text-success"
-              : badgeVariant === "danger"
-                ? "bg-danger/10 text-danger"
-                : "bg-surface-hover text-secondary"
-          }`}
-        >
-          {STATUS_LABEL[status]}
-        </span>
-      </div>
+      {/* Review Card Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 md:p-6 border-b border-border-subtle/60">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-accent">
+              Checkpoint {review.review_number}
+            </span>
+          </div>
+          <h3 className="text-lg font-bold text-primary tracking-tight">
+            {review.title}
+          </h3>
+        </div>
 
-      {/* Deadline + countdown */}
-      <div className="mt-1 flex items-center gap-2">
-        <p className="font-[family-name:var(--font-geist-mono)] text-xs text-muted">
-          {review.upload_deadline ? (
-            <>
-              Deadline: <ClientOnlyDateTime iso={review.upload_deadline} />
-            </>
-          ) : (
-            "Deadline not set"
-          )}
-        </p>
-        {status === "open" && review.upload_deadline ? (
-          <>
-            <span className="text-border-strong">·</span>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <StatusPill status={displayStatus} />
+          {isOpen && review.upload_deadline ? (
             <Countdown deadline={review.upload_deadline} />
-          </>
-        ) : null}
+          ) : null}
+        </div>
       </div>
 
-      {/* Disabled overlay content */}
-      <div className={disabled ? "opacity-60" : ""}>
-        {status === "not_open" ? (
-          <p className="mt-4 text-sm text-muted">
-            This review is not open yet.
-          </p>
-        ) : null}
-        {status === "locked" ? (
-          <p className="mt-4 text-sm text-muted">This review is locked.</p>
+      <div className="p-5 md:p-6 space-y-6">
+        {/* Deadline Notice Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-elevated/60 px-4 py-2.5 border border-border-subtle text-xs">
+          <div className="flex items-center gap-2 text-secondary">
+            <Calendar className="h-3.5 w-3.5 text-muted shrink-0" />
+            <span>Submission Deadline:</span>
+            {review.upload_deadline ? (
+              <span className="font-mono text-primary font-medium">
+                <ClientOnlyDateTime iso={review.upload_deadline} />
+              </span>
+            ) : (
+              <span className="text-muted italic">Not announced yet</span>
+            )}
+          </div>
+
+          {isLocked ? (
+            <div className="flex items-center gap-1.5 text-danger font-medium text-[11px]">
+              <Lock className="h-3 w-3" />
+              <span>Submissions Locked</span>
+            </div>
+          ) : isNotOpen ? (
+            <span className="text-muted text-[11px]">Submissions not open yet</span>
+          ) : (
+            <span className="text-success text-[11px] font-medium flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              Upload window active
+            </span>
+          )}
+        </div>
+
+        {/* Locked State Banner */}
+        {isLocked ? (
+          <div className="flex items-center gap-3 rounded-xl border border-danger/25 bg-danger/5 p-4 text-danger text-xs">
+            <Lock className="h-4 w-4 shrink-0" />
+            <p>
+              The deadline for this checkpoint has passed. Submissions and links are now locked for judging.
+            </p>
+          </div>
         ) : null}
 
-        {/* Presentation section */}
-        <div className="mt-4 space-y-3">
-          <h4 className="text-caption">Presentation</h4>
+        {/* Current Submission Display & Chips */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-[11px] mb-0">Presentation Deck</Label>
+            {submission?.ppt_uploaded_at ? (
+              <span className="text-[11px] text-muted">
+                Uploaded <ClientOnlyDateTime iso={submission.ppt_uploaded_at} />
+              </span>
+            ) : null}
+          </div>
 
           {submission?.ppt_filename ? (
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-md bg-surface-hover px-2.5 py-1 font-[family-name:var(--font-geist-mono)] text-xs text-secondary">
-                {submission.ppt_filename}
-              </span>
-              {submission.ppt_uploaded_at ? (
-                <span className="text-xs text-muted">
-                  uploaded <ClientOnlyDateTime iso={submission.ppt_uploaded_at} />
-                </span>
-              ) : null}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent-muted/20 p-3.5">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface border border-accent/30 text-accent shrink-0">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-mono font-medium text-primary truncate max-w-xs sm:max-w-md">
+                    {submission.ppt_filename}
+                  </p>
+                  <p className="text-[11px] text-accent">File stored & verified</p>
+                </div>
+              </div>
             </div>
-          ) : !disabled ? (
-            <p className="text-sm text-muted">No file uploaded yet.</p>
+          ) : !isLocked && !isNotOpen ? (
+            <p className="text-xs text-muted">No presentation uploaded yet.</p>
           ) : null}
 
-          {!disabled ? (
+          {/* Upload Dropzone Form (Only if Open) */}
+          {!isLocked && isOpen ? (
             <form
               action={uploadAction}
-              className="space-y-3"
+              className="space-y-3 pt-1"
               onSubmit={(e) => {
                 if (fileError || !selectedFile) {
                   e.preventDefault();
@@ -186,8 +222,7 @@ export function ReviewSlot({
             >
               <input type="hidden" name="review_number" value={review.review_number} />
 
-              {/* Dropzone-style file input */}
-              <label className="block cursor-pointer rounded-md border-2 border-dashed border-border-subtle py-6 text-center hover:border-accent hover:bg-accent/5 transition-colors duration-150">
+              <label className="group flex flex-col items-center justify-center cursor-pointer rounded-xl border-2 border-dashed border-border-subtle bg-surface-elevated/30 py-7 px-4 text-center hover:border-accent hover:bg-accent-muted/10 transition-all duration-150">
                 <input
                   type="file"
                   name="file"
@@ -195,121 +230,142 @@ export function ReviewSlot({
                   onChange={handleFileChange}
                   className="sr-only"
                 />
-                <svg
-                  className="mx-auto h-8 w-8 text-muted mb-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" x2="12" y1="3" y2="15" />
-                </svg>
-                <span className="text-sm text-secondary">
-                  {selectedFile ? selectedFile.name : "Choose a file or drag & drop"}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-border-subtle text-muted group-hover:text-accent group-hover:border-accent/40 transition-colors mb-2.5">
+                  <UploadCloud className="h-5 w-5" />
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-primary">
+                  {selectedFile ? selectedFile.name : "Select presentation file or drag & drop"}
                 </span>
-                <span className="block text-xs text-muted mt-1">
-                  .pptx, .ppt or .pdf, up to 25 MB
+                <span className="mt-1 text-[11px] text-muted">
+                  Supports .pptx, .ppt, or .pdf (up to 25 MB)
                 </span>
               </label>
 
-              {fileError ? (
-                <p role="alert" className="text-sm text-danger">{fileError}</p>
-              ) : null}
+              {fileError ? <FieldError>{fileError}</FieldError> : null}
               {uploadState && "error" in uploadState ? (
-                <p role="alert" className="text-sm text-danger">{uploadState.error}</p>
+                <FieldError>{uploadState.error}</FieldError>
               ) : null}
               {!uploadPending &&
               !uploadToast.dismissed &&
               uploadState &&
               "ok" in uploadState &&
               uploadState.ok ? (
-                <SuccessToast message="Uploaded." onDismiss={uploadToast.dismiss} />
+                <SuccessToast message="Presentation uploaded successfully." onDismiss={uploadToast.dismiss} />
               ) : null}
 
-              <button
-                type="submit"
-                disabled={uploadPending || !!fileError || !selectedFile}
-                className="rounded-md bg-accent text-accent-text px-4 py-2 text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
-              >
-                {uploadPending
-                  ? "Uploading…"
-                  : submission?.ppt_filename
-                    ? "Replace"
-                    : "Upload PPT"}
-              </button>
+              <div className="flex justify-end pt-1">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  loading={uploadPending}
+                  disabled={uploadPending || !!fileError || !selectedFile}
+                >
+                  {uploadPending
+                    ? "Uploading…"
+                    : submission?.ppt_filename
+                      ? "Replace Deck"
+                      : "Upload Deck"}
+                </Button>
+              </div>
             </form>
           ) : null}
         </div>
 
-        {/* Links section */}
-        <div className="mt-6 space-y-3">
-          <h4 className="text-caption">Links</h4>
+        {/* Links Section */}
+        <div className="space-y-3 pt-2 border-t border-border-subtle/60">
+          <div className="flex items-center justify-between">
+            <Label className="text-[11px] mb-0">Project Repository & Live Demo</Label>
+            {/* Clickable link chips */}
+            <div className="flex items-center gap-2">
+              {submission?.github_url ? (
+                <a
+                  href={submission.github_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2 py-0.5 text-[11px] font-medium text-info hover:text-info/80 border border-border-subtle transition-colors"
+                >
+                  <GithubIcon className="h-3 w-3" />
+                  <span>GitHub</span>
+                  <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              ) : null}
+
+              {submission?.demo_url ? (
+                <a
+                  href={submission.demo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2 py-0.5 text-[11px] font-medium text-accent hover:text-accent/80 border border-border-subtle transition-colors"
+                >
+                  <Globe className="h-3 w-3" />
+                  <span>Demo</span>
+                  <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              ) : null}
+            </div>
+          </div>
+
           <form action={linksAction} className="space-y-3">
             <input type="hidden" name="review_number" value={review.review_number} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label
-                  htmlFor={`github_url_${review.review_number}`}
-                  className="block text-xs text-muted mb-1"
-                >
+                <Label htmlFor={`github_url_${review.review_number}`} className="text-[11px]">
                   GitHub URL
-                </label>
-                <input
+                </Label>
+                <Input
                   id={`github_url_${review.review_number}`}
                   name="github_url"
-                  type="text"
-                  disabled={disabled}
+                  type="url"
+                  disabled={isLocked || isNotOpen}
                   value={githubUrl}
                   onChange={(e) => setGithubUrl(e.target.value)}
-                  className={inputClasses}
+                  placeholder="https://github.com/org/repo"
+                  icon={<GithubIcon className="h-4 w-4" />}
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor={`demo_url_${review.review_number}`}
-                  className="block text-xs text-muted mb-1"
-                >
-                  Demo URL
-                </label>
-                <input
+                <Label htmlFor={`demo_url_${review.review_number}`} className="text-[11px]">
+                  Live Demo URL
+                </Label>
+                <Input
                   id={`demo_url_${review.review_number}`}
                   name="demo_url"
-                  type="text"
-                  disabled={disabled}
+                  type="url"
+                  disabled={isLocked || isNotOpen}
                   value={demoUrl}
                   onChange={(e) => setDemoUrl(e.target.value)}
-                  className={inputClasses}
+                  placeholder="https://agent-demo.vercel.app"
+                  icon={<Globe className="h-4 w-4" />}
                 />
               </div>
             </div>
 
             {linksState && "error" in linksState ? (
-              <p role="alert" className="text-sm text-danger">{linksState.error}</p>
+              <FieldError>{linksState.error}</FieldError>
             ) : null}
             {!linksPending &&
             !linksToast.dismissed &&
             linksState &&
             "ok" in linksState &&
             linksState.ok ? (
-              <SuccessToast message="Saved." onDismiss={linksToast.dismiss} />
+              <SuccessToast message="Links updated successfully." onDismiss={linksToast.dismiss} />
             ) : null}
 
-            {!disabled ? (
-              <button
-                type="submit"
-                disabled={linksPending}
-                className="rounded-md border border-border-subtle bg-surface px-4 py-2 text-sm text-primary hover:bg-surface-hover hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
-              >
-                {linksPending ? "Saving…" : "Save links"}
-              </button>
+            {!isLocked && isOpen ? (
+              <div className="flex justify-end pt-1">
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="sm"
+                  loading={linksPending}
+                  disabled={linksPending}
+                >
+                  {linksPending ? "Saving…" : "Save Links"}
+                </Button>
+              </div>
             ) : null}
           </form>
         </div>

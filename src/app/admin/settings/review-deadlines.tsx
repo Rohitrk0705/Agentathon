@@ -3,7 +3,12 @@
 import { useActionState, useCallback, useState } from "react";
 import { reviewStatus } from "@/lib/deadlines";
 import { SuccessToast } from "@/components/success-toast";
+import { ClientOnlyDateTime } from "@/components/client-only-datetime";
 import { setReviewDeadline, type SettingsActionResult } from "./actions";
+import { StatusPill } from "@/components/ui/status-pill";
+import { Button } from "@/components/ui/button";
+import { Label, FieldError } from "@/components/ui/input";
+import { Calendar, Save, Trash2 } from "lucide-react";
 
 const initialState: SettingsActionResult | null = null;
 
@@ -20,18 +25,6 @@ function isoToLocalInputValue(iso: string): string {
     d.getHours(),
   )}:${pad(d.getMinutes())}`;
 }
-
-const STATUS_LABEL: Record<ReturnType<typeof reviewStatus>, string> = {
-  not_open: "Not open",
-  open: "Open",
-  locked: "Locked",
-};
-
-const STATUS_VARIANT: Record<ReturnType<typeof reviewStatus>, string> = {
-  not_open: "bg-surface-hover text-secondary",
-  open: "bg-success/10 text-success",
-  locked: "bg-danger/10 text-danger",
-};
 
 function ReviewDeadlineCard({ review }: { review: Review }) {
   const [state, formAction, pending] = useActionState(
@@ -50,18 +43,34 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
   }
 
   const dismiss = useCallback(() => setDismissed(true), []);
-
   const status = reviewStatus(review.upload_deadline);
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-primary">{review.title}</h3>
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_VARIANT[status]}`}
-        >
-          {STATUS_LABEL[status]}
-        </span>
+    <div className="rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border-subtle/50 pb-4">
+        <div>
+          <span className="text-[11px] font-mono uppercase tracking-widest text-accent font-semibold">
+            Stage {review.review_number}
+          </span>
+          <h3 className="text-base font-bold text-primary tracking-tight">
+            {review.title}
+          </h3>
+        </div>
+        <div>
+          <StatusPill status={status} />
+        </div>
+      </div>
+
+      <div className="text-xs text-secondary flex items-center gap-2">
+        <Calendar className="h-3.5 w-3.5 text-muted" />
+        <span>Current Active Deadline:</span>
+        {review.upload_deadline ? (
+          <span className="font-mono text-primary font-medium">
+            <ClientOnlyDateTime iso={review.upload_deadline} />
+          </span>
+        ) : (
+          <span className="text-muted italic">No cutoff configured</span>
+        )}
       </div>
 
       <form
@@ -77,45 +86,56 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
           }
           formAction(formData);
         }}
-        className="mt-4 space-y-3"
+        className="space-y-4 pt-1"
       >
         <input type="hidden" name="review_number" value={review.review_number} />
 
-        <input
-          type="datetime-local"
-          name="upload_deadline"
-          value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
-          className="w-full rounded-md border border-border-subtle bg-surface px-3 py-2 text-sm text-primary focus:border-border-strong focus:ring-1 focus:ring-accent focus:outline-none transition-colors duration-150"
-        />
+        <div>
+          <Label htmlFor={`deadline_${review.review_number}`}>
+            Select Upload Deadline
+          </Label>
+          <input
+            id={`deadline_${review.review_number}`}
+            type="datetime-local"
+            name="upload_deadline"
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            className="w-full rounded-lg border border-border-subtle bg-surface px-3.5 py-2 text-sm text-primary font-mono focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors"
+          />
+        </div>
 
         {state && "error" in state ? (
-          <p role="alert" className="text-sm text-danger">{state.error}</p>
+          <FieldError>{state.error}</FieldError>
         ) : null}
         {!pending && !dismissed && state && "ok" in state && state.ok ? (
-          <SuccessToast message="Saved." onDismiss={dismiss} />
+          <SuccessToast message="Review deadline updated." onDismiss={dismiss} />
         ) : null}
 
-        <div className="flex gap-2">
-          <button
+        <div className="flex items-center gap-2 pt-1">
+          <Button
             type="submit"
             name="intent"
             value="save"
-            disabled={pending}
-            className="rounded-md bg-accent text-accent-text px-4 py-2 text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+            variant="primary"
+            size="sm"
+            loading={pending}
+            icon={<Save className="h-3.5 w-3.5" />}
           >
-            {pending ? "Saving…" : "Save deadline"}
-          </button>
-          <button
+            {pending ? "Saving…" : "Save Deadline"}
+          </Button>
+
+          <Button
             type="submit"
             name="intent"
             value="clear"
-            disabled={pending}
+            variant="ghost"
+            size="sm"
+            disabled={pending || !review.upload_deadline}
             onClick={() => setLocalValue("")}
-            className="rounded-md bg-transparent border border-border-subtle px-4 py-2 text-sm text-primary hover:bg-surface-hover hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+            icon={<Trash2 className="h-3.5 w-3.5" />}
           >
-            Clear
-          </button>
+            Clear Cutoff
+          </Button>
         </div>
       </form>
     </div>
@@ -124,7 +144,7 @@ function ReviewDeadlineCard({ review }: { review: Review }) {
 
 export function ReviewDeadlines({ reviews }: { reviews: Review[] }) {
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
       {reviews.map((review) => (
         <ReviewDeadlineCard key={review.review_number} review={review} />
       ))}

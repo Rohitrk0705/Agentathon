@@ -2,6 +2,8 @@ import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NewTrackForm } from "./new-track-form";
 import { TrackRow } from "./track-row";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Layers } from "lucide-react";
 
 export default async function AdminTracksPage() {
   await requireAdmin();
@@ -12,46 +14,45 @@ export default async function AdminTracksPage() {
     .select("id, title, description")
     .order("created_at", { ascending: false });
 
+  const trackCount = tracks?.length ?? 0;
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-primary">
-          Tracks
-        </h1>
-        <p className="mt-1 text-sm text-secondary">
-          Problem statements teams can pick
-        </p>
+    <div className="space-y-6">
+      {/* Header with actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
+              Competition Domains
+            </span>
+            <span className="inline-flex items-center rounded-full bg-surface-elevated border border-border-subtle px-2 py-0.5 text-xs text-secondary font-mono">
+              {trackCount} Track{trackCount === 1 ? "" : "s"}
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">
+            Tracks Management
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-secondary">
+            Define and manage problem categories available for team registration
+          </p>
+        </div>
+
+        <div className="shrink-0">
+          <NewTrackForm />
+        </div>
       </div>
 
-      <div className="mb-8">
-        <NewTrackForm />
-      </div>
-
-      <div className="space-y-4">
+      {/* Tracks List */}
+      <div className="space-y-3">
         {tracks && tracks.length > 0 ? (
           tracks.map((track) => <TrackRow key={track.id} track={track} />)
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <svg
-              className="h-10 w-10 text-muted mb-3"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
-              <path d="m6.08 9.5-3.5 1.6a1 1 0 0 0 0 1.81l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9a1 1 0 0 0 0-1.83l-3.5-1.59" />
-              <path d="m6.08 14.5-3.5 1.6a1 1 0 0 0 0 1.81l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9a1 1 0 0 0 0-1.83l-3.5-1.59" />
-            </svg>
-            <h3 className="text-base font-semibold text-primary">No tracks yet</h3>
-            <p className="mt-1 text-sm text-secondary">
-              Add your first track above
-            </p>
-          </div>
+          <EmptyState
+            icon={<Layers className="h-6 w-6" />}
+            title="No tracks created yet"
+            description="Create your first competition track to let participants pick their challenge domain."
+            action={<NewTrackForm />}
+          />
         )}
       </div>
     </div>

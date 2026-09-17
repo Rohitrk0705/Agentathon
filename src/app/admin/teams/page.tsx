@@ -3,6 +3,19 @@ import { createClient } from "@/lib/supabase/server";
 import { formatLocalDateTime } from "@/lib/format";
 import { DownloadPptButton } from "./download-ppt-button";
 import { ScoreForm } from "./score-form";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Users,
+  ChevronDown,
+  Mail,
+  Phone,
+  Calendar,
+  Globe,
+  Award,
+  ExternalLink,
+} from "lucide-react";
+import { GithubIcon } from "@/components/ui/icons";
 
 type SubmissionRow = {
   id: string;
@@ -63,191 +76,242 @@ export default async function AdminTeamsPage() {
     submissionsByTeam.set(s.team_id, teamMap);
   }
 
+  const teamCount = teams?.length ?? 0;
+  const totalSubmissions = submissions?.length ?? 0;
+  const scoredCount = submissions?.filter((s) => s.score !== null).length ?? 0;
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-primary">
-          Teams
-        </h1>
-        <p className="mt-1 text-sm text-secondary">
-          {teams && teams.length > 0
-            ? `${teams.length} registered team${teams.length === 1 ? "" : "s"}`
-            : "No teams have registered yet"}
-        </p>
+    <div className="space-y-6">
+      {/* Header & Stats Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-accent font-semibold">
+              Cohort Registry
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">
+            Teams & Submissions
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-secondary">
+            Inspect team roster, download review pitch decks, and record official scores
+          </p>
+        </div>
+
+        {/* Quick summary chips */}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-3 py-1.5 text-secondary">
+            <Users className="h-3.5 w-3.5 text-muted" />
+            <strong className="text-primary font-semibold">{teamCount}</strong> Teams
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-3 py-1.5 text-secondary">
+            <Award className="h-3.5 w-3.5 text-accent" />
+            <strong className="text-primary font-semibold">{scoredCount}</strong> / {totalSubmissions} Scored
+          </span>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {!teams || teams.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <svg
-              className="h-10 w-10 text-muted mb-3"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            <h3 className="text-base font-semibold text-primary">No teams registered yet</h3>
-            <p className="mt-1 text-sm text-secondary">
-              Teams will appear here once they register
-            </p>
-          </div>
-        ) : (
-          teams.map((team) => {
+      {/* Teams List */}
+      {!teams || teams.length === 0 ? (
+        <EmptyState
+          icon={<Users className="h-6 w-6" />}
+          title="No teams registered yet"
+          description="Participant teams will appear here with submission decks and links once they register."
+        />
+      ) : (
+        <div className="space-y-3">
+          {teams.map((team) => {
             const teamSubmissions = submissionsByTeam.get(team.id);
             const teamMembers = membersByTeam.get(team.id) ?? [];
             const trackTitle = team.track_id
               ? trackTitleById.get(team.track_id) ?? "—"
               : "—";
 
+            // Count how many reviews have submissions
+            let submittedReviewCount = 0;
+            for (const r of reviews ?? []) {
+              if (teamSubmissions?.get(r.review_number)?.ppt_filename) {
+                submittedReviewCount++;
+              }
+            }
+
             return (
               <details
                 key={team.id}
-                className="group rounded-lg border border-border-subtle bg-surface"
+                className="group rounded-2xl border border-border-subtle bg-surface transition-all duration-150 overflow-hidden shadow-sm hover:border-border-strong"
               >
-                <summary className="flex cursor-pointer items-center justify-between gap-3 p-4 md:p-6 list-none [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer items-center justify-between gap-4 p-4 sm:p-5 list-none select-none [&::-webkit-details-marker]:hidden hover:bg-surface-hover/60 transition-colors">
                   <div className="flex flex-wrap items-center gap-3 min-w-0">
-                    <h2 className="text-base font-semibold text-primary truncate">
+                    <h2 className="text-base font-bold text-primary tracking-tight truncate">
                       {team.team_name}
                     </h2>
-                    <span className="inline-flex items-center rounded-full bg-accent/15 text-accent px-2.5 py-0.5 text-xs font-medium">
+
+                    <Badge variant="accent" className="text-xs">
                       {trackTitle}
+                    </Badge>
+
+                    <span className="inline-flex items-center gap-1 text-xs text-muted">
+                      <Users className="h-3 w-3" />
+                      {team.member_count} members
                     </span>
-                    <span className="text-xs text-muted">
-                      {team.member_count} member{team.member_count === 1 ? "" : "s"}
-                    </span>
-                    <span className="hidden md:inline text-xs text-muted">
+
+                    <span className="hidden md:inline-flex items-center gap-1 text-xs text-muted font-mono">
+                      <Mail className="h-3 w-3" />
                       {team.contact_email}
                     </span>
+
+                    <span className="inline-flex items-center gap-1 rounded-md bg-surface-elevated px-2 py-0.5 text-[11px] font-mono text-secondary border border-border-subtle">
+                      {submittedReviewCount} / {(reviews ?? []).length} Uploaded
+                    </span>
                   </div>
-                  <svg
-                    className="h-5 w-5 shrink-0 text-muted transition-transform duration-150 group-open:rotate-180"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-muted group-open:hidden">
+                      Details & Scoring
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-muted transition-transform duration-200 group-open:rotate-180" />
+                  </div>
                 </summary>
 
-                <div className="border-t border-border-subtle px-4 md:px-6 py-4 md:py-6 space-y-4">
-                  {/* Team details */}
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="border-t border-border-subtle/70 bg-surface/40 p-4 sm:p-6 space-y-6">
+                  {/* Team Contact & Roster Strip */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border border-border-subtle bg-surface p-4 text-xs">
                     <div>
-                      <dt className="text-xs text-muted uppercase tracking-wider">Members</dt>
-                      <dd className="mt-0.5 text-secondary">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted block mb-1">
+                        Team Roster
+                      </span>
+                      <p className="text-secondary font-medium">
                         {teamMembers.length > 0 ? teamMembers.join(", ") : "—"}
-                      </dd>
+                      </p>
                     </div>
+
                     <div>
-                      <dt className="text-xs text-muted uppercase tracking-wider">Contact</dt>
-                      <dd className="mt-0.5 text-secondary">
-                        {team.contact_email} · {team.contact_phone}
-                      </dd>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted block mb-1">
+                        Contact Details
+                      </span>
+                      <div className="space-y-0.5 text-secondary">
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="h-3 w-3 text-muted" />
+                          <span>{team.contact_email}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-3 w-3 text-muted" />
+                          <span>{team.contact_phone}</span>
+                        </div>
+                      </div>
                     </div>
+
                     <div>
-                      <dt className="text-xs text-muted uppercase tracking-wider">Registered</dt>
-                      <dd className="mt-0.5 text-secondary font-[family-name:var(--font-geist-mono)] text-xs">
-                        {formatLocalDateTime(team.created_at)}
-                      </dd>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted block mb-1">
+                        Registration Time
+                      </span>
+                      <div className="flex items-center gap-1.5 text-secondary font-mono">
+                        <Calendar className="h-3 w-3 text-muted" />
+                        <span>{formatLocalDateTime(team.created_at)}</span>
+                      </div>
                     </div>
-                  </dl>
+                  </div>
 
-                  {/* Reviews */}
-                  <div className="space-y-3">
-                    {(reviews ?? []).map((review) => {
-                      const submission = teamSubmissions?.get(review.review_number);
+                  {/* Dense Per-Review Breakdown & Scoring Table */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-accent font-mono">
+                      Milestone Reviews & Evaluations
+                    </h3>
 
-                      return (
-                        <div
-                          key={review.review_number}
-                          className="rounded-md border border-border-subtle bg-background p-4"
-                        >
-                          <h3 className="text-sm font-semibold text-primary">
-                            {review.title}
-                          </h3>
+                    <div className="space-y-3">
+                      {(reviews ?? []).map((review) => {
+                        const submission = teamSubmissions?.get(review.review_number);
 
-                          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-                            {submission?.ppt_uploaded_at ? (
-                              <>
-                                <span className="text-secondary text-xs">
-                                  Submitted{" "}
-                                  <span className="font-[family-name:var(--font-geist-mono)]">
-                                    {formatLocalDateTime(submission.ppt_uploaded_at)}
-                                  </span>
+                        return (
+                          <div
+                            key={review.review_number}
+                            className="rounded-xl border border-border-subtle bg-surface p-4 sm:p-5 transition-colors hover:border-border-strong space-y-3.5"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border-subtle/50 pb-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs font-bold text-accent">
+                                  R{review.review_number}
                                 </span>
+                                <h4 className="text-sm font-bold text-primary">
+                                  {review.title}
+                                </h4>
+                              </div>
+
+                              <div>
+                                {submission?.ppt_uploaded_at ? (
+                                  <span className="text-[11px] text-muted font-mono">
+                                    Submitted {formatLocalDateTime(submission.ppt_uploaded_at)}
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-muted italic">
+                                    No submission uploaded
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Presentation download & links row */}
+                            <div className="flex flex-wrap items-center gap-3 text-xs">
+                              {submission?.ppt_uploaded_at ? (
                                 <DownloadPptButton
                                   submissionId={submission.id}
                                   filename={submission.ppt_filename}
                                 />
-                              </>
-                            ) : (
-                              <span className="text-xs text-muted">Not submitted</span>
-                            )}
+                              ) : null}
 
-                            {submission?.github_url ? (
-                              <a
-                                href={submission.github_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-info hover:text-info/80 transition-colors duration-150"
-                              >
-                                GitHub ↗
-                              </a>
-                            ) : null}
+                              {submission?.github_url ? (
+                                <a
+                                  href={submission.github_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-3 py-1.5 text-xs text-info hover:text-info/80 hover:border-border-strong transition-colors"
+                                >
+                                  <GithubIcon className="h-3.5 w-3.5" />
+                                  <span>Repository</span>
+                                  <ExternalLink className="h-2.5 w-2.5" />
+                                </a>
+                              ) : null}
 
-                            {submission?.demo_url ? (
-                              <a
-                                href={submission.demo_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-info hover:text-info/80 transition-colors duration-150"
-                              >
-                                Demo ↗
-                              </a>
-                            ) : null}
-                          </div>
-
-                          {submission ? (
-                            <div className="mt-3 pt-3 border-t border-border-subtle">
-                              <ScoreForm
-                                submissionId={submission.id}
-                                initialScore={submission.score}
-                                initialRemarks={submission.remarks}
-                              />
-                              {submission.scored_at ? (
-                                <p className="mt-1 text-xs text-muted">
-                                  Scored{" "}
-                                  <span className="font-[family-name:var(--font-geist-mono)]">
-                                    {formatLocalDateTime(submission.scored_at)}
-                                  </span>
-                                </p>
+                              {submission?.demo_url ? (
+                                <a
+                                  href={submission.demo_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-3 py-1.5 text-xs text-accent hover:text-accent/80 hover:border-border-strong transition-colors"
+                                >
+                                  <Globe className="h-3.5 w-3.5" />
+                                  <span>Live Demo</span>
+                                  <ExternalLink className="h-2.5 w-2.5" />
+                                </a>
                               ) : null}
                             </div>
-                          ) : null}
-                        </div>
-                      );
-                    })}
+
+                            {/* Scoring form (only available if submission row exists) */}
+                            {submission ? (
+                              <div className="pt-2 border-t border-border-subtle/50">
+                                <ScoreForm
+                                  submissionId={submission.id}
+                                  initialScore={submission.score}
+                                  initialRemarks={submission.remarks}
+                                />
+                                {submission.scored_at ? (
+                                  <p className="mt-1.5 text-[11px] text-muted font-mono">
+                                    Last evaluated: {formatLocalDateTime(submission.scored_at)}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </details>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }

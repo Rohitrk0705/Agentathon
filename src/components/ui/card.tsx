@@ -2,12 +2,14 @@ import { forwardRef } from "react";
 
 export const Card = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(function Card({ className = "", ...props }, ref) {
+  React.HTMLAttributes<HTMLDivElement> & { hoverable?: boolean }
+>(function Card({ className = "", hoverable = false, ...props }, ref) {
   return (
     <div
       ref={ref}
-      className={`rounded-lg border border-border-subtle bg-surface p-6 ${className}`}
+      className={`rounded-xl border border-border-subtle bg-surface transition-all duration-200 ${
+        hoverable ? "hover:border-border-strong hover:bg-surface-hover" : ""
+      } ${className}`}
       {...props}
     />
   );
@@ -17,7 +19,12 @@ export function CardHeader({
   className = "",
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={`flex flex-col gap-1.5 ${className}`} {...props} />;
+  return (
+    <div
+      className={`flex flex-col gap-1.5 p-5 md:p-6 border-b border-border-subtle/50 ${className}`}
+      {...props}
+    />
+  );
 }
 
 export function CardTitle({
@@ -27,7 +34,7 @@ export function CardTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={`text-base font-semibold text-primary tracking-tight ${className}`}
+      className={`text-base md:text-lg font-semibold text-primary tracking-tight ${className}`}
       {...props}
     >
       {children}
@@ -40,7 +47,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={`text-sm text-secondary ${className}`} {...props} />
+    <p className={`text-sm text-secondary leading-relaxed ${className}`} {...props} />
   );
 }
 
@@ -48,7 +55,7 @@ export function CardContent({
   className = "",
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={`pt-4 ${className}`} {...props} />;
+  return <div className={`p-5 md:p-6 ${className}`} {...props} />;
 }
 
 export function CardFooter({
@@ -57,7 +64,7 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`flex items-center gap-2 pt-4 ${className}`}
+      className={`flex items-center gap-3 p-5 md:p-6 pt-0 ${className}`}
       {...props}
     />
   );

@@ -1,5 +1,8 @@
-type BadgeVariant =
+import { forwardRef } from "react";
+
+export type BadgeVariant =
   | "default"
+  | "neutral"
   | "success"
   | "warning"
   | "danger"
@@ -7,26 +10,49 @@ type BadgeVariant =
   | "accent";
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-surface-hover text-secondary",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
-  danger: "bg-danger/10 text-danger",
-  info: "bg-info/10 text-info",
-  accent: "bg-accent/15 text-accent",
+  default: "bg-surface-elevated text-secondary border-border-subtle",
+  neutral: "bg-surface-elevated text-secondary border-border-subtle",
+  success: "bg-success/15 text-success border-success/30",
+  warning: "bg-warning/15 text-warning border-warning/30",
+  danger: "bg-danger/15 text-danger border-danger/30",
+  info: "bg-info/15 text-info border-info/30",
+  accent: "bg-accent-muted text-accent border-accent/30 font-semibold",
 };
 
-export function Badge({
-  variant = "default",
-  className = "",
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLSpanElement> & { variant?: BadgeVariant }) {
+export const Badge = forwardRef<
+  HTMLSpanElement,
+  React.HTMLAttributes<HTMLSpanElement> & {
+    variant?: BadgeVariant;
+    dot?: boolean;
+  }
+>(function Badge(
+  { variant = "default", dot = false, className = "", children, ...props },
+  ref,
+) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${variantClasses[variant]} ${className}`}
+      ref={ref}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium tracking-tight ${variantClasses[variant]} ${className}`}
       {...props}
     >
+      {dot && (
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            variant === "success"
+              ? "bg-success"
+              : variant === "warning"
+                ? "bg-warning"
+                : variant === "danger"
+                  ? "bg-danger"
+                  : variant === "info"
+                    ? "bg-info"
+                    : variant === "accent"
+                      ? "bg-accent"
+                      : "bg-muted"
+          }`}
+        />
+      )}
       {children}
     </span>
   );
-}
+});
