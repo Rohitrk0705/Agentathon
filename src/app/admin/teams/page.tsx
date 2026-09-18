@@ -286,21 +286,20 @@ export default async function AdminTeamsPage() {
                               ) : null}
                             </div>
 
-                            {/* Scoring form (only available if submission row exists) */}
-                            {submission ? (
-                              <div className="pt-2 border-t border-border-subtle/50">
-                                <ScoreForm
-                                  submissionId={submission.id}
-                                  initialScore={submission.score}
-                                  initialRemarks={submission.remarks}
-                                />
-                                {submission.scored_at ? (
-                                  <p className="mt-1.5 text-[11px] text-muted font-mono">
-                                    Last evaluated: {formatLocalDateTime(submission.scored_at)}
-                                  </p>
-                                ) : null}
-                              </div>
-                            ) : null}
+                            {/* Scoring form: always available, even with no upload */}
+                            <div className="pt-2 border-t border-border-subtle/50">
+                              <ScoreForm
+                                teamId={team.id}
+                                reviewNumber={review.review_number as 1 | 2 | 3}
+                                initialScore={submission?.score ?? null}
+                                initialRemarks={submission?.remarks ?? null}
+                              />
+                              {submission?.scored_at ? (
+                                <p className="mt-1.5 text-[11px] text-muted font-mono">
+                                  Last evaluated: {formatLocalDateTime(submission.scored_at)}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
                         );
                       })}

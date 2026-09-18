@@ -51,7 +51,8 @@ export async function scoreSubmission(
   await requireAdmin();
 
   const parsed = scoreSubmissionSchema.safeParse({
-    submission_id: formData.get("submission_id"),
+    team_id: formData.get("team_id"),
+    review_number: formData.get("review_number"),
     score: formData.get("score"),
     remarks: formData.get("remarks"),
   });
@@ -60,31 +61,43 @@ export async function scoreSubmission(
     return { error: "Score must be between 0 and 10." };
   }
 
-  const { submission_id, remarks } = parsed.data;
+  const { team_id, review_number, remarks } = parsed.data;
   const score = parsed.data.score === null ? null : Math.round(parsed.data.score * 10) / 10;
 
   const supabase = await createClient();
 
-  const { data: submission } = await supabase
-    .from("submissions")
-    .select("id")
-    .eq("id", submission_id)
-    .single();
+  // Nothing to save: don't create an empty submission row for a team that
+  // never uploaded. If a row already exists, fall through so the admin can
+  // clear a previously saved score/remarks.
+  if (score === null && remarks === null) {
+    const { data: existing } = await supabase
+      .from("submissions")
+      .select("id")
+      .eq("team_id", team_id)
+      .eq("review_number", review_number)
+      .maybeSingle();
 
-  if (!submission) {
-    return { error: "Submission not found." };
+    if (!existing) {
+      return { ok: true };
+    }
   }
 
-  const { error: updateError } = await supabase
-    .from("submissions")
-    .update({
+  // Keyed on the unique (team_id, review_number) index, so a conflict resolves
+  // to an update of only these columns -- participant-owned columns (ppt_path,
+  // ppt_filename, ppt_uploaded_at, github_url, demo_url) are never touched, and
+  // on insert they stay null until the team uploads.
+  const { error: upsertError } = await supabase.from("submissions").upsert(
+    {
+      team_id,
+      review_number,
       score,
       remarks,
-      scored_at: score !== null ? new Date().toISOString() : null,
-    })
-    .eq("id", submission_id);
+      scored_at: score === null ? null : new Date().toISOString(),
+    },
+    { onConflict: "team_id,review_number" },
+  );
 
-  if (updateError) {
+  if (upsertError) {
     return { error: "Could not save the score. Please try again." };
   }
 

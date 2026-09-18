@@ -105,7 +105,8 @@ export function validatePptFile(file: File): { ok: true } | { error: string } {
 // `Number("") === 0`), not NaN, so the literal("") branch must come first
 // or an empty score would silently save as 0 instead of clearing to null.
 export const scoreSubmissionSchema = z.object({
-  submission_id: z.string().uuid(),
+  team_id: z.string().uuid(),
+  review_number: z.coerce.number().int().min(1).max(3),
   score: z.union([
     z.literal("").transform(() => null),
     z.coerce.number().min(0).max(10),

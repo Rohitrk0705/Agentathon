@@ -23,14 +23,19 @@ function useDismissableSuccess(state: ScoreActionResult | null) {
 }
 
 export function ScoreForm({
-  submissionId,
+  teamId,
+  reviewNumber,
   initialScore,
   initialRemarks,
 }: {
-  submissionId: string;
+  teamId: string;
+  reviewNumber: 1 | 2 | 3;
   initialScore: number | null;
   initialRemarks: string | null;
 }) {
+  // A submission row may not exist yet, so the field id is keyed on the pair
+  // the form actually saves against.
+  const fieldId = `score_${teamId}_${reviewNumber}`;
   const [state, formAction, pending] = useActionState(
     scoreSubmission,
     initialState,
@@ -67,19 +72,20 @@ export function ScoreForm({
         if (clientError) e.preventDefault();
       }}
     >
-      <input type="hidden" name="submission_id" value={submissionId} />
+      <input type="hidden" name="team_id" value={teamId} />
+      <input type="hidden" name="review_number" value={reviewNumber} />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface px-2.5 py-1">
           <Award className="h-3.5 w-3.5 text-accent shrink-0" />
           <label
             className="text-xs font-semibold text-secondary uppercase tracking-wider"
-            htmlFor={`score_${submissionId}`}
+            htmlFor={fieldId}
           >
             Score:
           </label>
           <input
-            id={`score_${submissionId}`}
+            id={fieldId}
             name="score"
             type="number"
             step="0.1"
