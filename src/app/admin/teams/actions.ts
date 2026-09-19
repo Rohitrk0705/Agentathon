@@ -5,11 +5,16 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { scoreSubmissionSchema } from "@/lib/validation";
+import { maxScoreFor, type ReviewNumber } from "@/lib/scoring";
 
 export type SignedUrlResult = { ok: true; url: string } | { error: string };
 export type ScoreActionResult = { ok: true } | { error: string };
 
 const submissionIdSchema = z.string().uuid();
+
+function isReviewNumber(n: number): n is ReviewNumber {
+  return n === 1 || n === 2 || n === 3;
+}
 
 export async function getSignedPptUrl(
   submissionId: string,
@@ -58,11 +63,22 @@ export async function scoreSubmission(
   });
 
   if (!parsed.success) {
-    return { error: "Score must be between 0 and 10." };
+    // review_number may itself be what failed, so fall back to the stricter
+    // bound rather than reporting a range the form can't actually accept.
+    const raw = Number(formData.get("review_number"));
+    const max = isReviewNumber(raw) ? maxScoreFor(raw) : 10;
+    return { error: `Score must be between 0 and ${max}.` };
   }
 
   const { team_id, review_number, remarks } = parsed.data;
   const score = parsed.data.score === null ? null : Math.round(parsed.data.score * 10) / 10;
+
+  // The ceiling is recomputed here from the review number the server parsed --
+  // the form's own min/max attributes are a convenience, never the authority.
+  const max = maxScoreFor(review_number);
+  if (score !== null && (score < 0 || score > max)) {
+    return { error: `Score must be between 0 and ${max}.` };
+  }
 
   const supabase = await createClient();
 

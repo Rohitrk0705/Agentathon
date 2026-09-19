@@ -4,6 +4,7 @@ import { ExportCsvButton } from "./export-csv-button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Trophy, Medal, Award } from "lucide-react";
+import { MAX_TOTAL_SCORE, maxScoreFor } from "@/lib/scoring";
 
 export default async function AdminLeaderboardPage() {
   await requireAdmin();
@@ -47,7 +48,7 @@ export default async function AdminLeaderboardPage() {
             Official Leaderboard
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-secondary">
-            Cumulative evaluation scores ranked across Review 1, 2, and 3 (Max 30.0 pts)
+            Cumulative evaluation scores ranked across Review 1, 2, and 3 (Max {MAX_TOTAL_SCORE}.0 pts)
           </p>
         </div>
 
@@ -79,16 +80,16 @@ export default async function AdminLeaderboardPage() {
                     Track
                   </th>
                   <th className="sticky top-0 px-4 sm:px-6 py-3.5 text-caption font-bold text-center w-24">
-                    R1 / 10
+                    R1 / {maxScoreFor(1)}
                   </th>
                   <th className="sticky top-0 px-4 sm:px-6 py-3.5 text-caption font-bold text-center w-24">
-                    R2 / 10
+                    R2 / {maxScoreFor(2)}
                   </th>
                   <th className="sticky top-0 px-4 sm:px-6 py-3.5 text-caption font-bold text-center w-24">
-                    R3 / 10
+                    R3 / {maxScoreFor(3)}
                   </th>
                   <th className="sticky top-0 px-4 sm:px-6 py-3.5 text-caption font-bold text-right w-28">
-                    Total Score
+                    Total / {MAX_TOTAL_SCORE}
                   </th>
                 </tr>
               </thead>
@@ -187,7 +188,7 @@ export default async function AdminLeaderboardPage() {
                           {Number(team.total_score).toFixed(1)}
                         </span>
                         <span className="text-[11px] text-muted font-mono ml-1">
-                          / 30
+                          / {MAX_TOTAL_SCORE}
                         </span>
                       </td>
                     </tr>

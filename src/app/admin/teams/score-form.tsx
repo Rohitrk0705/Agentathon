@@ -6,6 +6,7 @@ import { scoreSubmission, type ScoreActionResult } from "./actions";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/input";
 import { Award, Check } from "lucide-react";
+import { maxScoreFor } from "@/lib/scoring";
 
 const initialState: ScoreActionResult | null = null;
 
@@ -36,6 +37,9 @@ export function ScoreForm({
   // A submission row may not exist yet, so the field id is keyed on the pair
   // the form actually saves against.
   const fieldId = `score_${teamId}_${reviewNumber}`;
+  // R2 is scored out of 50, R1 and R3 out of 10. The server re-derives this
+  // from review_number; the input attributes are only a typing aid.
+  const maxScore = maxScoreFor(reviewNumber);
   const [state, formAction, pending] = useActionState(
     scoreSubmission,
     initialState,
@@ -56,8 +60,8 @@ export function ScoreForm({
     }
 
     const num = Number(value);
-    if (Number.isNaN(num) || num < 0 || num > 10) {
-      setClientError("Score must be between 0 and 10.");
+    if (Number.isNaN(num) || num < 0 || num > maxScore) {
+      setClientError(`Score must be between 0 and ${maxScore}.`);
       return;
     }
 
@@ -90,13 +94,13 @@ export function ScoreForm({
             type="number"
             step="0.1"
             min="0"
-            max="10"
-            placeholder="—"
+            max={maxScore}
+            placeholder={`0–${maxScore}`}
             value={scoreValue}
             onChange={(e) => handleScoreChange(e.target.value)}
             className="w-14 bg-transparent text-sm font-mono font-semibold text-primary tabular-nums text-center focus:outline-none"
           />
-          <span className="text-xs text-muted font-mono">/ 10</span>
+          <span className="text-xs text-muted font-mono">/ {maxScore}</span>
         </div>
 
         <Button

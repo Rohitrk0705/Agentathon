@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { maxScoreFor, type ReviewNumber } from "@/lib/scoring";
 
 const optionalDescription = z.preprocess(
   (val) => (typeof val !== "string" || val.trim() === "" ? undefined : val),
@@ -101,19 +102,50 @@ export function validatePptFile(file: File): { ok: true } | { error: string } {
   return { ok: true };
 }
 
+// The upper bound depends on which review is being scored (R2 is out of 50),
+// so the score field is built per review rather than fixed on the schema.
+//
 // Union order matters here: z.coerce.number() on "" resolves to 0 (JS
 // `Number("") === 0`), not NaN, so the literal("") branch must come first
 // or an empty score would silently save as 0 instead of clearing to null.
-export const scoreSubmissionSchema = z.object({
-  team_id: z.string().uuid(),
-  review_number: z.coerce.number().int().min(1).max(3),
-  score: z.union([
+export function scoreValueSchema(reviewNumber: ReviewNumber) {
+  return z.union([
     z.literal("").transform(() => null),
-    z.coerce.number().min(0).max(10),
-  ]),
-  remarks: z.preprocess((val) => {
-    if (typeof val !== "string") return val;
-    const trimmed = val.trim();
-    return trimmed === "" ? null : trimmed;
-  }, z.string().max(2000).nullable()),
-});
+    z.coerce.number().min(0).max(maxScoreFor(reviewNumber)),
+  ]);
+}
+
+export const scoreSubmissionSchema = z
+  .object({
+    team_id: z.string().uuid(),
+    review_number: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(3)
+      .transform((n) => n as ReviewNumber),
+    score: z.unknown(),
+    remarks: z.preprocess((val) => {
+      if (typeof val !== "string") return val;
+      const trimmed = val.trim();
+      return trimmed === "" ? null : trimmed;
+    }, z.string().max(2000).nullable()),
+  })
+  // review_number is parsed from the form, never taken as a bound from the
+  // client, so the max applied here is always the server's own.
+  .transform((data, ctx) => {
+    const parsedScore = scoreValueSchema(data.review_number).safeParse(
+      data.score,
+    );
+
+    if (!parsedScore.success) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Score must be between 0 and ${maxScoreFor(data.review_number)}.`,
+        path: ["score"],
+      });
+      return z.NEVER;
+    }
+
+    return { ...data, score: parsedScore.data };
+  });
